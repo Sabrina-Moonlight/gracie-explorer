@@ -40,6 +40,8 @@ jobs:
           keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey > /dev/null \
             || { echo "::error::El secret DEBUG_KEYSTORE_BASE64 no es una llave valida (alias androiddebugkey, clave android)."; exit 1; }
           echo "Using persistent signing key from secret."
+          KS_SHA=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -m1 "SHA256:" | awk '{print $2}' | tr -d ':' | tr 'A-F' 'a-f')
+          echo "Llave del secret (SHA-256): $KS_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Build Release APK
         run: |
@@ -55,6 +57,7 @@ jobs:
         run: |
           APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -n 1)
           for f in app/build/outputs/apk/release/*.apk; do
+            echo "APK compilado (SHA-256):" | tee -a "$GITHUB_STEP_SUMMARY"
             "$APKSIGNER" verify --print-certs "$f" | grep -i "SHA-256" | tee -a "$GITHUB_STEP_SUMMARY"
           done || true
 
