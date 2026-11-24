@@ -251,7 +251,61 @@ class FilesTab(
     fun openFile(context: Context, item: ContentHolder) {
         if (item is LocalFileHolder && item.isApk()) {
             toggleApkDialog(item)
+        } else if (item is LocalFileHolder && item.extension.equals("zip", ignoreCase = true)) {
+            openZipOrItsApk(context, item)
         } else {
+            openFileDefault(context, item)
+        }
+    }
+
+    // Source zip of the apk currently shown in the apk dialog (null when the apk is a normal file)
+    var apkSourceZip: LocalFileHolder? = null
+
+    /**
+     * If the zip contains exactly one apk, extracts it to the cache and shows the apk dialog
+     * (install/update or explore the zip). Otherwise the zip opens as usual.
+     */
+    private fun openZipOrItsApk(context: Context, zip: LocalFileHolder) {
+        scope.launch {
+            var apkFile: File? = null
+            try {
+                withContext(Dispatchers.IO) {
+                    java.util.zip.ZipFile(zip.file).use { zf ->
+                        val apks = zf.entries().asSequence()
+                            .filter { !it.isDirectory && it.name.endsWith(".apk", ignoreCase = true) }
+                            .take(2)
+                            .toList()
+                        if (apks.size == 1) {
+                            val dir = File(
+                                globalClass.cleanOnExitDir.file,
+                                "zipapk-" + zip.uniquePath.hashCode().toUInt().toString(16)
+                            ).apply { mkdirs() }
+                            val out = File(dir, File(apks[0].name).name)
+                            zf.getInputStream(apks[0]).use { input ->
+                                out.outputStream().use { input.copyTo(it) }
+                            }
+                            apkFile = out
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.logError(e)
+                apkFile = null
+            }
+            withContext(Dispatchers.Main) {
+                val apk = apkFile
+                if (apk != null && apk.exists()) {
+                    apkSourceZip = zip
+                    toggleApkDialog(LocalFileHolder(apk))
+                } else {
+                    openFileDefault(context, zip)
+                }
+            }
+        }
+    }
+
+    private fun openFileDefault(context: Context, item: ContentHolder) {
+        run {
             item.open(
                 context = context,
                 anonymous = false,
@@ -723,6 +777,7 @@ class FilesTab(
             _dialogsState.update { it.copy(showApkDialog = true) }
         } else {
             targetFile = null
+            apkSourceZip = null
             _dialogsState.update { it.copy(showApkDialog = false) }
         }
     }

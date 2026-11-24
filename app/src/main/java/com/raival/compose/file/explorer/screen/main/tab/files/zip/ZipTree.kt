@@ -82,11 +82,13 @@ class ZipTree(
         zipEntries.clear()
 
         try {
-            val zipFile = ZipFile(source.file)
-            val enum: Enumeration<*> = zipFile.entries()
-            while (enum.hasMoreElements()) {
-                val entry = enum.nextElement() as ZipEntry
-                zipEntries.put(entry.name, entry)
+            // `use` closes the file; leaving it open made the GC close it later and crash with EIO
+            ZipFile(source.file).use { zipFile ->
+                val enum: Enumeration<*> = zipFile.entries()
+                while (enum.hasMoreElements()) {
+                    val entry = enum.nextElement() as ZipEntry
+                    zipEntries.put(entry.name, entry)
+                }
             }
         } catch (e: Exception) {
             logger.logError(e)

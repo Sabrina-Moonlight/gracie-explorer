@@ -386,24 +386,13 @@ class MainActivityManager {
 
     fun loadStartupTabs() {
         managerScope.launch {
-            val startupTabs: StartupTabs =
-                if (globalClass.preferencesManager.rememberLastSession)
-                    fromJson(globalClass.preferencesManager.lastSessionTabs)
-                        ?: StartupTabs.default()
-                else fromJson(globalClass.preferencesManager.startupTabs)
-                    ?: StartupTabs.default()
+            // Always start in the Downloads folder (ignores saved session and startup tabs)
+            val downloads = android.os.Environment
+                .getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                .apply { if (!exists()) mkdirs() }
 
-            val tabs = arrayListOf<Tab>()
+            val tabs = arrayListOf<Tab>(FilesTab(LocalFileHolder(downloads)))
             val index = 0
-
-            startupTabs.tabs.forEachIndexed { _, tab ->
-                val newTab = when (tab.type) {
-                    StartupTabType.FILES -> FilesTab(LocalFileHolder(File(tab.extra)))
-                    StartupTabType.APPS -> AppsTab()
-                    else -> HomeTab()
-                }
-                tabs.add(newTab)
-            }
 
             // Update the state first
             _state.update {

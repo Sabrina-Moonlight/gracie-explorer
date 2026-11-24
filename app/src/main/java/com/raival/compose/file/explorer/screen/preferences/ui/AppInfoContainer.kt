@@ -1,37 +1,28 @@
 package com.raival.compose.file.explorer.screen.preferences.ui
 
+import android.content.Intent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.R
-import com.raival.compose.file.explorer.common.emptyString
 import com.raival.compose.file.explorer.common.showMsg
-import com.raival.compose.file.explorer.screen.main.ui.AppInfoDialog
+import com.raival.compose.file.explorer.screen.logs.LogsActivity
 import com.raival.compose.file.explorer.screen.preferences.misc.exportPreferences
 import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
 fun AppInfoContainer() {
-    var showAppInfoDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    AppInfoDialog(
-        show = showAppInfoDialog,
-        onDismiss = { showAppInfoDialog = false },
-        hasNewUpdate = globalClass.mainActivityManager.newUpdate != null
-    )
 
     Container(title = stringResource(R.string.other)) {
         PreferenceItem(
@@ -53,11 +44,11 @@ fun AppInfoContainer() {
         )
 
         PreferenceItem(
-            label = stringResource(R.string.about),
-            supportingText = emptyString,
-            icon = Icons.Rounded.Info,
+            label = stringResource(R.string.title_activity_logs),
+            supportingText = stringResource(R.string.view_application_logs),
+            icon = Icons.Rounded.BugReport,
             onClick = {
-                showAppInfoDialog = true
+                context.startActivity(Intent(context, LogsActivity::class.java))
             }
         )
     }

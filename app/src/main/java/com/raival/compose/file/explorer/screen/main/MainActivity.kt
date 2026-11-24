@@ -50,7 +50,6 @@ import com.raival.compose.file.explorer.screen.main.tab.files.holder.LocalFileHo
 import com.raival.compose.file.explorer.screen.main.tab.files.ui.FilesTabContentView
 import com.raival.compose.file.explorer.screen.main.tab.home.HomeTab
 import com.raival.compose.file.explorer.screen.main.tab.home.ui.HomeTabContentView
-import com.raival.compose.file.explorer.screen.main.ui.AppInfoDialog
 import com.raival.compose.file.explorer.screen.main.ui.JumpToPathDialog
 import com.raival.compose.file.explorer.screen.main.ui.SaveTextEditorFilesDialog
 import com.raival.compose.file.explorer.screen.main.ui.StartupTabsSettingsScreen
@@ -112,7 +111,6 @@ class MainActivity : BaseActivity() {
                     }
 
                     LaunchedEffect(Unit) {
-                        mainActivityManager.checkForUpdate()
                         if (hasIntent()) {
                             handleIntent()
                         } else {
@@ -125,12 +123,6 @@ class MainActivity : BaseActivity() {
                     JumpToPathDialog(
                         show = mainActivityState.showJumpToPathDialog,
                         onDismiss = { mainActivityManager.toggleJumpToPathDialog(false) }
-                    )
-
-                    AppInfoDialog(
-                        show = mainActivityState.showAppInfoDialog,
-                        hasNewUpdate = mainActivityState.hasNewUpdate,
-                        onDismiss = { mainActivityManager.toggleAppInfoDialog(false) }
                     )
 
                     SaveTextEditorFilesDialog(
@@ -153,9 +145,7 @@ class MainActivity : BaseActivity() {
                         if (!globalClass.preferencesManager.hideToolbar) {
                             Toolbar(
                                 title = mainActivityState.title,
-                                subtitle = mainActivityState.subtitle,
-                                hasNewUpdate = mainActivityState.hasNewUpdate,
-                                onToggleAppInfoDialog = { mainActivityManager.toggleAppInfoDialog(it) }
+                                subtitle = mainActivityState.subtitle
                             )
                         }
                         TabLayout(

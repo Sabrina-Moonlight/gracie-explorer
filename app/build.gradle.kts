@@ -9,7 +9,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.raival.compose.file.explorer"
+        applicationId = "com.gracie.explorer"
         minSdk = 26
         targetSdk = 36
         versionCode = 10

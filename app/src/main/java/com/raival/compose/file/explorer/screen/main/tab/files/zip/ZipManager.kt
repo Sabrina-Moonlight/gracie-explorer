@@ -2,14 +2,12 @@ package com.raival.compose.file.explorer.screen.main.tab.files.zip
 
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.common.isNot
-import com.raival.compose.file.explorer.common.removeIf
 import com.raival.compose.file.explorer.screen.main.tab.files.FilesTab
 import com.raival.compose.file.explorer.screen.main.tab.files.holder.LocalFileHolder
 import com.raival.compose.file.explorer.screen.main.tab.files.holder.VirtualFileHolder
-import kotlinx.coroutines.runBlocking
 
 class ZipManager {
-    private val archiveList = hashMapOf<LocalFileHolder, ZipTree>()
+    private val archiveList = java.util.concurrent.ConcurrentHashMap<LocalFileHolder, ZipTree>()
 
 
     /**
@@ -19,14 +17,16 @@ class ZipManager {
      * @return A set of unique paths of the invalid archive trees.
      */
     suspend fun validateArchiveTrees(): Set<String> {
-        val invalidTrees =
-            archiveList.values.filter { !it.source.isValid() }.map { it.source.uniquePath }
+        val invalidTrees = hashSetOf<String>()
 
-        archiveList.removeIf { localFileHolder, zipTree ->
-            runBlocking { !localFileHolder.isValid() }
+        // Work on a snapshot: other threads may add/remove trees while we validate
+        archiveList.entries.toList().forEach { (holder, tree) ->
+            val sourceValid = tree.source.isValid()
+            if (!sourceValid) invalidTrees.add(tree.source.uniquePath)
+            if (!sourceValid || !holder.isValid()) archiveList.remove(holder, tree)
         }
 
-        return invalidTrees.toSet()
+        return invalidTrees
     }
 
     suspend fun checkForSourceChanges(): Boolean {

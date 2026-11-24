@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesomeMotion
 import androidx.compose.material.icons.rounded.CheckBox
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.R
@@ -50,9 +52,7 @@ import com.raival.compose.file.explorer.screen.preferences.PreferencesActivity
 @Composable
 fun Toolbar(
     title: String,
-    subtitle: String,
-    onToggleAppInfoDialog: (Boolean) -> Unit,
-    hasNewUpdate: Boolean
+    subtitle: String
 ) {
     Row(
         modifier = Modifier
@@ -62,25 +62,10 @@ fun Toolbar(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box {
-            IconButton(
-                onClick = { onToggleAppInfoDialog(true) }
-            ) {
-                if (hasNewUpdate) {
-                    Icon(
-                        imageVector = PrismIcons.Upgrade,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                } else {
-                    Icon(imageVector = Icons.Rounded.Menu, contentDescription = null)
-                }
-
-            }
-        }
-
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
@@ -125,24 +110,6 @@ fun MoreOptionsButton() {
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             val state by mainActivityManager.state.collectAsState()
-
-            if (state.hasNewUpdate && globalClass.preferencesManager.hideToolbar) {
-                DropdownMenuItem(
-                    text = {
-                        Text(text = stringResource(R.string.new_update_available))
-                    },
-                    onClick = {
-                        mainActivityManager.toggleAppInfoDialog(true)
-                        showOptionsMenu = false
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = PrismIcons.Upgrade,
-                            contentDescription = null
-                        )
-                    }
-                )
-            }
 
             if (mainActivityManager.getActiveTab() is FilesTab) {
                 val showHiddenFiles = globalClass.preferencesManager.showHiddenFiles
@@ -235,19 +202,6 @@ fun MoreOptionsButton() {
                     Icon(imageVector = Icons.Rounded.Settings, contentDescription = null)
                 }
             )
-
-            if (globalClass.preferencesManager.hideToolbar) {
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(R.string.about)) },
-                    onClick = {
-                        mainActivityManager.toggleAppInfoDialog(true)
-                        showOptionsMenu = false
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Rounded.Info, contentDescription = null)
-                    }
-                )
-            }
         }
     }
 }

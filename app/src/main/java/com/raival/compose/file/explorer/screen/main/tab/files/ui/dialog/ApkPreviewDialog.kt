@@ -302,12 +302,17 @@ fun ApkPreviewDialog(
                         ) {
                             OutlinedButton(
                                 onClick = {
-                                    apkFile.open(
-                                        context = context,
-                                        anonymous = false,
-                                        skipSupportedExtensions = false,
-                                        customMimeType = "application/zip"
-                                    )
+                                    val sourceZip = tab.apkSourceZip
+                                    if (sourceZip != null) {
+                                        globalClass.zipManager.openArchive(sourceZip)
+                                    } else {
+                                        apkFile.open(
+                                            context = context,
+                                            anonymous = false,
+                                            skipSupportedExtensions = false,
+                                            customMimeType = "application/zip"
+                                        )
+                                    }
                                     onDismissRequest()
                                 },
                                 modifier = Modifier.weight(1f)

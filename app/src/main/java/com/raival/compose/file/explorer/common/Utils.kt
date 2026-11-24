@@ -261,9 +261,11 @@ fun <T> List<T>.getIndexIf(condition: T.() -> Boolean): Int {
 }
 
 fun <A, B> HashMap<A, B>.removeIf(condition: (A, B) -> Boolean) {
-    keys.forEach {
-        if (condition(it, this[it]!!)) {
-            remove(it)
+    val iterator = entries.iterator()
+    while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if (condition(entry.key, entry.value)) {
+            iterator.remove()
         }
     }
 }
