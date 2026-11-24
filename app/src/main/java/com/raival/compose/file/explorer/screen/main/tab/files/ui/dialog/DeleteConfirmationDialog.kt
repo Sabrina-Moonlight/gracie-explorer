@@ -17,14 +17,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.R
+import com.raival.compose.file.explorer.common.SystemTrash
 import com.raival.compose.file.explorer.common.ui.CheckableText
 import com.raival.compose.file.explorer.common.ui.Space
 import com.raival.compose.file.explorer.screen.main.tab.files.FilesTab
+import com.raival.compose.file.explorer.screen.main.tab.files.holder.LocalFileHolder
 import com.raival.compose.file.explorer.screen.main.tab.files.task.CopyTask
 import com.raival.compose.file.explorer.screen.main.tab.files.task.CopyTaskParameters
 import com.raival.compose.file.explorer.screen.main.tab.files.task.DeleteTask
 import com.raival.compose.file.explorer.screen.main.tab.files.task.DeleteTaskParameters
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun DeleteConfirmationDialog(
@@ -64,18 +68,31 @@ fun DeleteConfirmationDialog(
                         }
                         tab.scope.launch {
                             if (!bottomOptionsBarState.value.showEmptyRecycleBinButton && moveToRecycleBin) {
-                                globalClass.recycleBinDir.createSubFolder(
-                                    System.currentTimeMillis().toString()
-                                ) { newDir ->
-                                    if (newDir != null) {
-                                        globalClass.taskManager.addTaskAndRun(
-                                            CopyTask(targetFiles, true),
-                                            CopyTaskParameters(
-                                                newDir
+                                // Primero la papelera del sistema; lo que no se pueda va a la papelera propia
+                                if (SystemTrash.isSupported() && !SystemTrash.hasPermission() &&
+                                    !preferencesManager.askedManageMediaPermission
+                                ) {
+                                    preferencesManager.askedManageMediaPermission = true
+                                    SystemTrash.requestPermission()
+                                }
+                                val leftovers = withContext(Dispatchers.IO) {
+                                    targetFiles.filterNot { it is LocalFileHolder && SystemTrash.trash(it.file) }
+                                }
+                                if (leftovers.size < targetFiles.size) tab.reloadFiles()
+                                if (leftovers.isNotEmpty()) {
+                                    globalClass.recycleBinDir.createSubFolder(
+                                        System.currentTimeMillis().toString()
+                                    ) { newDir ->
+                                        if (newDir != null) {
+                                            globalClass.taskManager.addTaskAndRun(
+                                                CopyTask(leftovers, true),
+                                                CopyTaskParameters(
+                                                    newDir
+                                                )
                                             )
-                                        )
-                                    } else {
-                                        globalClass.showMsg(globalClass.getString(R.string.unable_to_move_to_recycle_bin))
+                                        } else {
+                                            globalClass.showMsg(globalClass.getString(R.string.unable_to_move_to_recycle_bin))
+                                        }
                                     }
                                 }
                             } else {

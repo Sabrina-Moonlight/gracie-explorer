@@ -172,6 +172,12 @@ class PreferencesManager {
         getPreferencesKey = { booleanPreferencesKey(it) }
     )
 
+    var askedManageMediaPermission by prefMutableState(
+        keyName = "askedManageMediaPermission",
+        defaultValue = false,
+        getPreferencesKey = { booleanPreferencesKey(it) }
+    )
+
     var defaultOpeningMethods by prefMutableState(
         keyName = "defaultOpeningMethods",
         defaultValue = DefaultOpeningMethods().toJson(),
