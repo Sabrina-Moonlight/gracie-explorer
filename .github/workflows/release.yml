@@ -42,6 +42,8 @@ jobs:
           echo "Using persistent signing key from secret."
           KS_SHA=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -m1 "SHA256:" | awk '{print $2}' | tr -d ':' | tr 'A-F' 'a-f')
           echo "Llave del secret (SHA-256): $KS_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "KS_SHA=$KS_SHA" >> "$GITHUB_ENV"
+          echo "GRACIE_KEYSTORE=$HOME/.android/debug.keystore" >> "$GITHUB_ENV"
 
       - name: Build Release APK
         run: |
@@ -66,3 +68,16 @@ jobs:
         with:
           name: gracies-explorer-release
           path: app/build/outputs/apk/release/*.apk
+
+      # Si la firma del APK no es la del secret, el job se pone en rojo (el APK ya se subió arriba).
+      - name: Verify signature matches secret
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -n 1)
+          for f in app/build/outputs/apk/release/*.apk; do
+            APK_SHA=$("$APKSIGNER" verify --print-certs "$f" | grep -m1 "SHA-256" | awk '{print $NF}')
+            if [ "$APK_SHA" != "$KS_SHA" ]; then
+              echo "::error::La firma del APK ($APK_SHA) NO es la del secret ($KS_SHA)."
+              exit 1
+            fi
+            echo "Firma correcta: $APK_SHA"
+          done
