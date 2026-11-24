@@ -21,9 +21,27 @@ android {
         includeInBundle = false
     }
 
+    // Firma fija: usa el archivo exacto que prepara el workflow (variable GRACIE_KEYSTORE).
+    // Si no existe (compilación local), cae a la llave debug normal.
+    val gracieKeystore: String? = System.getenv("GRACIE_KEYSTORE")
+    signingConfigs {
+        create("gracie") {
+            if (gracieKeystore != null) {
+                storeFile = file(gracieKeystore)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (gracieKeystore != null) {
+                signingConfigs.getByName("gracie")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

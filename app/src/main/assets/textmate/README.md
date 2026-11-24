@@ -1,11 +1,2 @@
-# Gracie's Keyboard
-
-Teclado personal para Android, basado en [FUTO Keyboard](https://github.com/futo-org/android-keyboard). Funciona sin internet y no recoge datos.
-
-El código sigue la licencia de FUTO (ver `LICENSE.md`).
-
-## Compilar
-
-```
-./gradlew assembleStableRelease
-```
+Thanks to: [CodeAssist](https://github.com/tyron12233/CodeAssist)
+Original source: https://github.com/tyron12233/CodeAssist/tree/main/app/src/main/assets/textmate
