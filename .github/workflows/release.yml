@@ -55,6 +55,20 @@ jobs:
           done
           exit 1
 
+      # Firma el APK con la llave del secret, pase lo que pase en Gradle.
+      - name: Sign APK with secret key
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -n 1)
+          for f in app/build/outputs/apk/release/*.apk; do
+            "$APKSIGNER" sign \
+              --ks ~/.android/debug.keystore \
+              --ks-pass pass:android \
+              --ks-key-alias androiddebugkey \
+              --key-pass pass:android \
+              "$f"
+            echo "Firmado con la llave del secret: $f"
+          done
+
       - name: Show APK signing fingerprint
         run: |
           APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -n 1)
