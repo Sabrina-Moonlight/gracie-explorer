@@ -42,7 +42,14 @@ jobs:
           echo "Using persistent signing key from secret."
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-configuration-cache --console=plain --warning-mode summary
+        run: |
+          # Maven a veces responde 429 (demasiadas peticiones). Se reintenta hasta 3 veces.
+          for i in 1 2 3; do
+            ./gradlew assembleRelease --no-configuration-cache --console=plain --warning-mode summary && exit 0
+            echo "::warning::Intento $i falló. Reintentando en 60 s..."
+            sleep 60
+          done
+          exit 1
 
       - name: Show APK signing fingerprint
         run: |
