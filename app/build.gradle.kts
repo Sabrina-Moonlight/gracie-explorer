@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -24,6 +23,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -42,14 +42,9 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
         apiVersion = "1.9"
     }
-
-    baselineProfile {
-        dexLayoutOptimization = true
-    }
 }
 
 dependencies {
-    "baselineProfile"(project(":baselineprofile"))
     implementation(libs.androidx.profileinstaller)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
