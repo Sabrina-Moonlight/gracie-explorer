@@ -20,7 +20,7 @@ class JsonFormatter : Formatter {
     }
 
     private fun format(txt: String): String {
-        if (txt.isEmpty()) return txt
+        if (txt.isBlank()) return txt
 
         val isObject = txt.trim()[0] == '{'
 

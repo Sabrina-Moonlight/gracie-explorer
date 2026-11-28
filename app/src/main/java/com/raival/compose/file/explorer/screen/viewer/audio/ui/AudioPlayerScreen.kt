@@ -34,7 +34,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -42,8 +41,6 @@ import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,11 +56,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -100,7 +96,6 @@ fun MusicPlayerScreen(
     val context = LocalContext.current
     val playerState by audioPlayerInstance.playerState.collectAsState()
     val metadata by audioPlayerInstance.metadata.collectAsState()
-    val isEqualizerVisible by audioPlayerInstance.isEqualizerVisible.collectAsState()
     val isVolumeVisible by audioPlayerInstance.isVolumeVisible.collectAsState()
     val customColorScheme by audioPlayerInstance.audioPlayerColorScheme.collectAsState()
     val defaultScheme = AudioPlayerColorScheme(
@@ -149,7 +144,6 @@ fun MusicPlayerScreen(
 
                 // Top controls
                 TopControls(
-                    onEqualizerClick = { audioPlayerInstance.toggleEqualizer() },
                     onVolumeClick = { audioPlayerInstance.toggleVolume() },
                     onCloseClick = onClosed,
                     audioPlayerColorScheme = customColorScheme
@@ -216,25 +210,12 @@ fun MusicPlayerScreen(
                     colorScheme = customColorScheme
                 )
             }
-
-            // Equalizer overlay
-            AnimatedVisibility(
-                visible = isEqualizerVisible,
-                enter = slideInVertically { -it } + fadeIn() + scaleIn(initialScale = 0.6f),
-                exit = slideOutVertically { -it } + fadeOut()
-            ) {
-                EqualizerView(
-                    onDismiss = { audioPlayerInstance.toggleEqualizer() },
-                    colorScheme = customColorScheme
-                )
-            }
         }
     }
 }
 
 @Composable
 fun TopControls(
-    onEqualizerClick: () -> Unit,
     onVolumeClick: () -> Unit,
     onCloseClick: () -> Unit,
     audioPlayerColorScheme: AudioPlayerColorScheme,
@@ -258,14 +239,6 @@ fun TopControls(
             IconButton(onClick = onVolumeClick) {
                 Icon(
                     Icons.AutoMirrored.Filled.VolumeUp,
-                    contentDescription = null,
-                    tint = audioPlayerColorScheme.tintColor
-                )
-            }
-
-            IconButton(onClick = onEqualizerClick) {
-                Icon(
-                    Icons.Default.Equalizer,
                     contentDescription = null,
                     tint = audioPlayerColorScheme.tintColor
                 )
@@ -660,139 +633,6 @@ fun VolumeView(
                     contentDescription = null,
                     tint = colorScheme.tintColor.copy(alpha = 0.7f)
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun EqualizerView(
-    onDismiss: () -> Unit,
-    colorScheme: AudioPlayerColorScheme
-) {
-    val frequencies = listOf("60Hz", "230Hz", "910Hz", "4kHz", "14kHz")
-    val gains = remember { mutableStateListOf(0f, 0f, 0f, 0f, 0f) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .windowInsetsPadding(WindowInsets.statusBars),
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surface.copy(alpha = 0.95f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.equalizer),
-                    color = colorScheme.tintColor,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = null,
-                        tint = colorScheme.tintColor
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                frequencies.forEachIndexed { index, frequency ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "+15",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            fontSize = 10.sp,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-
-                        Space(8.dp)
-
-                        Slider(
-                            value = gains[index],
-                            onValueChange = { gains[index] = it },
-                            valueRange = -15f..15f,
-                            modifier = Modifier.weight(1f),
-                            colors = SliderDefaults.colors(
-                                thumbColor = colorScheme.tintColor,
-                                activeTrackColor = colorScheme.primary,
-                                inactiveTrackColor = colorScheme.tintColor.copy(alpha = 0.3f)
-                            )
-                        )
-
-                        Space(8.dp)
-
-                        Text(
-                            text = "-15",
-                            color = colorScheme.tintColor.copy(alpha = 0.6f),
-                            fontSize = 10.sp,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-
-                        Space(8.dp)
-
-                        Text(
-                            text = frequency,
-                            color = colorScheme.tintColor,
-                            fontSize = 12.sp,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    onClick = {
-                        for (i in gains.indices) {
-                            gains[i] = 0f
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.reset),
-                        color = colorScheme.tintColor
-                    )
-                }
-
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.done),
-                        color = colorScheme.tintColor
-                    )
-                }
             }
         }
     }

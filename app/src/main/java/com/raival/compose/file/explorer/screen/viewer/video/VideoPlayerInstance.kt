@@ -41,6 +41,7 @@ class VideoPlayerInstance(
         }
 
         withContext(Dispatchers.Main) {
+            exoPlayer?.release()
             exoPlayer = ExoPlayer.Builder(context).build().apply {
                 val mediaItem = MediaItem.Builder()
                     .setUri(uri)

@@ -1,5 +1,8 @@
 package com.raival.compose.file.explorer.screen.viewer.image.ui
 
+import kotlinx.coroutines.withContext
+import java.io.File
+import kotlinx.coroutines.Dispatchers
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
@@ -83,7 +86,6 @@ import coil3.toBitmap
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.App.Companion.logger
 import com.raival.compose.file.explorer.R
-import com.raival.compose.file.explorer.common.read
 import com.raival.compose.file.explorer.common.showMsg
 import com.raival.compose.file.explorer.screen.viewer.ViewerActivity
 import com.raival.compose.file.explorer.screen.viewer.ViewerInstance
@@ -104,7 +106,7 @@ fun ImageViewerScreen(instance: ViewerInstance) {
         Color.Black
     )
     var currentImageBackgroundColorIndex by remember { mutableIntStateOf(0) }
-    var imageData by remember { mutableStateOf(ByteArray(0)) }
+    var imageReadable by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) }
@@ -118,7 +120,16 @@ fun ImageViewerScreen(instance: ViewerInstance) {
     // Load image data
     LaunchedEffect(instance.uri) {
         try {
-            imageData = instance.uri.read()
+            // Only check that the file has content; Coil loads the image itself
+            imageReadable = withContext(Dispatchers.IO) {
+                when (instance.uri.scheme) {
+                    "content" -> globalClass.contentResolver.openInputStream(instance.uri)
+                        ?.use { it.read() != -1 } ?: false
+
+                    "file" -> instance.uri.path?.let { File(it).length() > 0 } ?: false
+                    else -> false
+                }
+            }
             isLoading = false
         } catch (e: Exception) {
             logger.logError(e)
@@ -128,8 +139,8 @@ fun ImageViewerScreen(instance: ViewerInstance) {
     }
 
     // Extract image info when image is loaded
-    LaunchedEffect(imageData, imageDimensions.first) {
-        if (imageData.isNotEmpty() && imageDimensions.first.isNotEmpty()) {
+    LaunchedEffect(imageReadable, imageDimensions.first) {
+        if (imageReadable && imageDimensions.first.isNotEmpty()) {
             imageInfo =
                 extractImageInfo(instance.uri, imageDimensions.first, imageDimensions.second)
         }
@@ -186,11 +197,20 @@ fun ImageViewerScreen(instance: ViewerInstance) {
 
                 // Extract dominant color
                 LaunchedEffect(image) {
-                    if (image != null) {
-                        val bitmap = image!!.toBitmap().copy(Bitmap.Config.ARGB_8888, false)
-                        val palette = Palette.from(bitmap).generate()
-                        dominantColor = Color(palette.getDominantColor(defaultColor.toArgb()))
-                        secondaryColor = Color(palette.getMutedColor(defaultColor.toArgb()))
+                    val currentImage = image
+                    if (currentImage != null) {
+                        try {
+                            val palette = withContext(Dispatchers.Default) {
+                                val bitmap = currentImage.toBitmap().copy(Bitmap.Config.ARGB_8888, false)
+                                Palette.from(bitmap).generate()
+                            }
+                            dominantColor = Color(palette.getDominantColor(defaultColor.toArgb()))
+                            secondaryColor = Color(palette.getMutedColor(defaultColor.toArgb()))
+                        } catch (e: Exception) {
+                            logger.logError(e)
+                        } catch (_: OutOfMemoryError) {
+                            // Imagen demasiado grande: se deja el color por defecto
+                        }
                     }
                 }
 

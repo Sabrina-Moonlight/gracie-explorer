@@ -154,6 +154,7 @@ class TextEditorManager {
         if (getFileInstance() isNot null) { // to prevent checking when no file instance has yet been created
             if (!activeFile.exists()) {
                 onFileNotFound()
+                return
             }
 
             if (activeFile.lastModified isNot getFileInstance()?.lastModified) {
@@ -215,44 +216,55 @@ class TextEditorManager {
             }
             onConfirm = {
                 save(
-                    onSaved = {
-                        save(fileInstance) {
-                            globalClass.showMsg(R.string.saved)
-                            fileInstanceList.remove(fileInstance)
-                        }
-                    },
+                    fileInstance = fileInstance,
                     onFailed = { globalClass.showMsg(R.string.failed_to_save) }
-                )
+                ) {
+                    globalClass.showMsg(R.string.saved)
+                    fileInstanceList.remove(fileInstance)
+                }
                 showWarningDialog = false
             }
             showWarningDialog = true
         }
     }
 
-    private fun save(fileInstance: FileInstance, onSaved: () -> Unit) {
+    private fun save(fileInstance: FileInstance, onFailed: () -> Unit, onSaved: () -> Unit) {
         isSaving = true
         scope.launch {
-            fileInstance.apply {
-                file.writeText(fileInstance.content.toString())
-                lastModified = fileInstance.file.lastModified
-                requireSave = false
-                requireSaveCurrentFile = false
+            try {
+                fileInstance.apply {
+                    file.writeText(fileInstance.content.toString())
+                    lastModified = fileInstance.file.lastModified
+                    requireSave = false
+                    if (file.uniquePath == activeFile.uniquePath) requireSaveCurrentFile = false
+                }
+                withContext(Dispatchers.Main) { onSaved() }
+            } catch (e: Exception) {
+                logger.logError(e)
+                withContext(Dispatchers.Main) { onFailed() }
+            } finally {
+                isSaving = false
             }
-            withContext(Dispatchers.Main) { onSaved() }
-            isSaving = false
         }
     }
 
     fun save(onSaved: () -> Unit, onFailed: () -> Unit) {
         isSaving = true
         scope.launch {
-            getFileInstance()?.let { instance ->
+            val instance = getFileInstance()
+            try {
+                if (instance == null) throw IllegalStateException("No file instance")
                 activeFile.writeText(instance.content.toString())
                 instance.lastModified = activeFile.lastModified
                 instance.requireSave = false
                 requireSaveCurrentFile = false
-                withContext(Dispatchers.Main) { onSaved().also { isSaving = false } }
-            } ?: withContext(Dispatchers.Main) { onFailed().also { isSaving = false } }
+                withContext(Dispatchers.Main) { onSaved() }
+            } catch (e: Exception) {
+                logger.logError(e)
+                withContext(Dispatchers.Main) { onFailed() }
+            } finally {
+                isSaving = false
+            }
         }
     }
 
@@ -406,6 +418,7 @@ class TextEditorManager {
         if (!fileInstance.file.exists() && !fileInstance.file.isFile()) {
             fileInstanceList.remove(fileInstance)
             globalClass.showMsg(R.string.file_not_found)
+            return
         }
 
         activeFile = fileInstance.file

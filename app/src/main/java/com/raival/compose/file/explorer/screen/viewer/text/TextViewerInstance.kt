@@ -20,6 +20,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.raival.compose.file.explorer.App.Companion.globalClass
 import com.raival.compose.file.explorer.App.Companion.logger
+import com.raival.compose.file.explorer.common.showMsg
 import com.raival.compose.file.explorer.R
 import com.raival.compose.file.explorer.common.emptyString
 import com.raival.compose.file.explorer.common.exists
@@ -93,7 +94,14 @@ class TextViewerInstance(
     fun readContent(scope: CoroutineScope, onLoaded: () -> Unit) {
         analyseFile()
         scope.launch {
-            content = readSourceFile(this)
+            try {
+                content = readSourceFile(this)
+            } catch (e: Exception) {
+                // No se llama a onLoaded: así nunca se guarda un archivo vacío por error
+                logger.logError(e)
+                globalClass.showMsg(R.string.file_not_found)
+                return@launch
+            }
             onLoaded()
         }
     }

@@ -249,8 +249,8 @@ fun AdvanceRenameDialog(
             add("{s}" to globalClass.getString(R.string.extension))
             add("{e}" to globalClass.getString(R.string.extension_with_dot))
             add("{t}" to globalClass.getString(R.string.last_modified))
-            add("{n}" to globalClass.getString(R.string.number_increment))
-            add("{zn}" to globalClass.getString(R.string.zero_number_increment))
+            add("{1}" to globalClass.getString(R.string.number_increment))
+            add("{zz1}" to globalClass.getString(R.string.zero_number_increment))
         }
     }
 

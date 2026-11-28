@@ -17,10 +17,12 @@ class AudioFileDecoder(
     override suspend fun decode(): DecodeResult? {
         return try {
             val metadata = MediaMetadataRetriever()
-            metadata.setDataSource(source.absolutePath)
-
-            val albumArt = metadata.embeddedPicture
-            metadata.release()
+            val albumArt = try {
+                metadata.setDataSource(source.absolutePath)
+                metadata.embeddedPicture
+            } finally {
+                metadata.release()
+            }
 
             if (albumArt != null) {
                 val bitmap = decodeByteArray(albumArt, 0, albumArt.size)
@@ -43,7 +45,7 @@ class AudioFileDecoder(
             imageLoader: ImageLoader
         ): Decoder? {
             val file = result.source.file().toFile()
-            if (file.exists() && audioFileType.contains(file.extension)) {
+            if (file.exists() && audioFileType.contains(file.extension.lowercase())) {
                 return AudioFileDecoder(file)
             }
             return null

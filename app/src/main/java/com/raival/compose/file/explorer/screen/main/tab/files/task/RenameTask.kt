@@ -478,8 +478,9 @@ class RenameTask(val sourceContent: List<ContentHolder>) : Task() {
                         val zPart = zMatch.groupValues[1]
                         val numberPart = zMatch.groupValues[2]
                         val paddingWidth = zPart.length
-                        val startNumber = numberPart.toInt()
-                        (startNumber + index).toString().padStart(paddingWidth, '0')
+                        val startNumber = numberPart.toIntOrNull()
+                        if (startNumber == null) matchResult.value
+                        else (startNumber + index).toString().padStart(paddingWidth, '0')
                     }
 
                     token.toIntOrNull() != null -> {
@@ -492,9 +493,14 @@ class RenameTask(val sourceContent: List<ContentHolder>) : Task() {
             }
 
             if (textToFind.isNotEmpty()) {
-                newFileName = when (useRegex) {
-                    true -> newFileName.replace(textToFind.toRegex(), replaceText)
-                    false -> newFileName.replace(textToFind, replaceText)
+                newFileName = try {
+                    when (useRegex) {
+                        true -> newFileName.replace(textToFind.toRegex(), replaceText)
+                        false -> newFileName.replace(textToFind, replaceText)
+                    }
+                } catch (_: Exception) {
+                    // Patrón incompleto o grupo inexistente: se deja el nombre sin cambiar
+                    newFileName
                 }
             }
 

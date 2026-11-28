@@ -124,6 +124,7 @@ fun BookmarksDialog(
                                     iconSize = 20.dp
                                 ) {
                                     globalClass.preferencesManager.bookmarks -= item.uniquePath
+                                    bookmarks.remove(item)
                                 }
                             }
                         ) { _, _, _ ->

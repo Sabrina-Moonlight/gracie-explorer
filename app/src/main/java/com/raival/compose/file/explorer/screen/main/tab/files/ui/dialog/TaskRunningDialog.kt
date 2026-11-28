@@ -45,7 +45,6 @@ fun TaskRunningDialog() {
     val linkedTask = dialogInfo.linkedTask
     if (showDialog && progressMonitor != null && linkedTask != null) {
         var isAborted by remember { mutableStateOf(false) }
-        val isHidden by remember { mutableStateOf(false) }
         Dialog(
             onDismissRequest = { },
             properties = DialogProperties(
@@ -203,7 +202,7 @@ fun TaskRunningDialog() {
                         // Move to Background Button
                         if (linkedTask.metadata.canMoveToBackground) {
                             TextButton(
-                                enabled = !isHidden && !isAborted,
+                                enabled = !isAborted,
                                 onClick = {
                                     globalClass.taskManager.hideRunningTaskDialog()
                                 },
@@ -229,7 +228,7 @@ fun TaskRunningDialog() {
                                     linkedTask.abortTask()
                                     isAborted = true
                                 },
-                                enabled = !isAborted && !isHidden,
+                                enabled = !isAborted,
                                 colors = ButtonDefaults.filledTonalButtonColors(
                                     containerColor = MaterialTheme.colorScheme.errorContainer,
                                     contentColor = MaterialTheme.colorScheme.onErrorContainer,

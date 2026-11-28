@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.Mutex
 
 class PdfViewerInstance(
@@ -111,14 +112,17 @@ class PdfViewerInstance(
     fun isValid(): Boolean = pdfRenderer isNot null
 
     override fun onClose() {
+        scope.cancel()
         runBlocking {
-            try {
-                scope.cancel()
-                pages.forEach { it.recycle() }
-                pdfRenderer?.close()
-                fileDescriptor?.close()
-            } catch (e: Exception) {
-                logger.logError(e)
+            // Espera a que termine la página que se esté dibujando antes de cerrar el PDF
+            mutex.withLock {
+                try {
+                    pages.forEach { it.recycle() }
+                    pdfRenderer?.close()
+                    fileDescriptor?.close()
+                } catch (e: Exception) {
+                    logger.logError(e)
+                }
             }
         }
     }

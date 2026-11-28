@@ -44,10 +44,7 @@ import com.raival.compose.file.explorer.screen.textEditor.TextEditorManager
 import io.github.rosemoe.sora.text.Content
 import io.github.rosemoe.sora.widget.CodeEditor
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InputStream
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.io.Writer
@@ -593,17 +590,6 @@ fun Uri.exists(context: Context): Boolean {
 
     // 3. For other schemes or if all checks fail
     return false
-}
-
-@Throws(IOException::class)
-fun Uri.read(): ByteArray {
-    val contentResolver = globalClass.contentResolver
-    val inputStream: InputStream? = when (scheme) {
-        "content" -> contentResolver.openInputStream(this)
-        "file" -> FileInputStream(this.path?.let { File(it) })
-        else -> null
-    }
-    inputStream?.use { stream -> return stream.readBytes() } ?: return ByteArray(0)
 }
 
 // =============================================================================

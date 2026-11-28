@@ -1,5 +1,7 @@
 package com.raival.compose.file.explorer.screen.main.tab.files.ui.dialog
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.foundation.horizontalScroll
@@ -96,10 +98,12 @@ fun ApkPreviewDialog(
 
         LaunchedEffect(Unit) {
             try {
-                val archiveInfo = packageManager.getPackageArchiveInfo(
-                    apkFile.uniquePath,
-                    PackageManager.GET_PERMISSIONS
-                )
+                val archiveInfo = withContext(Dispatchers.IO) {
+                    packageManager.getPackageArchiveInfo(
+                        apkFile.uniquePath,
+                        PackageManager.GET_PERMISSIONS
+                    )
+                }
 
                 if (archiveInfo != null) {
                     archiveInfo.applicationInfo?.sourceDir = apkFile.uniquePath

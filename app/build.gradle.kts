@@ -88,7 +88,6 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
-    implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.palette.ktx)
 
     // Sora Code Editor
@@ -115,7 +114,6 @@ dependencies {
 
     // Third-Party General Utilities
     implementation(libs.apksig)
-    implementation(libs.commons.net)
     implementation(libs.gson)
     implementation(libs.storage)
     implementation(libs.zip4j)

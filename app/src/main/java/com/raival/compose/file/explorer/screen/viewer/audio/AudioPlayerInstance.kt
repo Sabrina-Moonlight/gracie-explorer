@@ -40,9 +40,6 @@ class AudioPlayerInstance(
     private val _metadata = MutableStateFlow(AudioMetadata())
     val metadata: StateFlow<AudioMetadata> = _metadata.asStateFlow()
 
-    private val _isEqualizerVisible = MutableStateFlow(false)
-    val isEqualizerVisible: StateFlow<Boolean> = _isEqualizerVisible.asStateFlow()
-
     private val _isVolumeVisible = MutableStateFlow(false)
     val isVolumeVisible: StateFlow<Boolean> = _isVolumeVisible.asStateFlow()
 
@@ -55,6 +52,7 @@ class AudioPlayerInstance(
     @OptIn(UnstableApi::class)
     suspend fun initializePlayer(context: Context, uri: Uri) {
         withContext(Dispatchers.Main) {
+            exoPlayer?.release()
             exoPlayer = ExoPlayer.Builder(context).build().apply {
                 val mediaItem = MediaItem.Builder()
                     .setUri(uri)
@@ -99,8 +97,8 @@ class AudioPlayerInstance(
 
     private suspend fun extractMetadata(context: Context, uri: Uri) {
         withContext(Dispatchers.IO) {
+            val retriever = MediaMetadataRetriever()
             try {
-                val retriever = MediaMetadataRetriever()
                 retriever.setDataSource(context, uri)
 
                 val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
@@ -134,14 +132,14 @@ class AudioPlayerInstance(
                     val colorScheme = extractColorsFromBitmap(bitmap, _colorScheme.value)
                     _colorScheme.value = colorScheme
                 }
-
-                retriever.release()
             } catch (e: Exception) {
                 logger.logError(e)
                 // Fallback metadata
                 _metadata.value = AudioMetadata(
                     title = uri.lastPathSegment ?: globalClass.getString(R.string.unknown_title)
                 )
+            } finally {
+                retriever.release()
             }
         }
     }
@@ -202,10 +200,6 @@ class AudioPlayerInstance(
     fun setVolume(volume: Float) {
         exoPlayer?.volume = volume
         _playerState.update { it.copy(volume = volume) }
-    }
-
-    fun toggleEqualizer() {
-        _isEqualizerVisible.value = !_isEqualizerVisible.value
     }
 
     fun toggleVolume() {

@@ -123,6 +123,11 @@ class ApksMergeTask(
             }
 
             signApkFile(mergedFile)
+
+            if (aborted && progressMonitor.status == TaskStatus.RUNNING) {
+                markAsAborted()
+                return
+            }
         }
 
         if (progressMonitor.status == TaskStatus.RUNNING) {

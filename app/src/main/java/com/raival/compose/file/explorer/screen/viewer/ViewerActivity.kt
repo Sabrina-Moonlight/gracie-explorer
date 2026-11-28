@@ -42,6 +42,8 @@ abstract class ViewerActivity : BaseActivity() {
             globalClass.viewersManager.instances.add(
                 onCreateNewInstance(uri!!, uid).also { currentInstance = it }
             )
+        } else {
+            currentInstance = instance
         }
 
         checkPermissions()
