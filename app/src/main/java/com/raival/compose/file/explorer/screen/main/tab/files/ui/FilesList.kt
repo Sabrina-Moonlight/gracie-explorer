@@ -72,7 +72,6 @@ import com.raival.compose.file.explorer.screen.main.tab.files.misc.ViewType
 import com.raival.compose.file.explorer.screen.preferences.constant.FileItemSizeMap.getFileListFontSize
 import com.raival.compose.file.explorer.screen.preferences.constant.FileItemSizeMap.getFileListIconSize
 import com.raival.compose.file.explorer.screen.preferences.constant.FileItemSizeMap.getFileListSpace
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -610,44 +609,6 @@ private fun FileDetails(
     )
 }
 
-@Composable
-private fun FileDetailsCompact(
-    item: ContentHolder,
-    currentItemPath: String,
-    isHighlighted: Boolean
-) {
-    Isolate {
-        var details by remember(
-            key1 = currentItemPath,
-            key2 = item.lastModified
-        ) { mutableStateOf(emptyString) }
-
-        LaunchedEffect(
-            key1 = currentItemPath,
-            key2 = item.lastModified
-        ) {
-            if (details.isEmpty()) {
-                val det = item.getDetails()
-                withContext(Dispatchers.Main) { details = det }
-            }
-        }
-
-        Text(
-            modifier = Modifier.alpha(0.6f),
-            text = details,
-            fontSize = 10.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            color = if (isHighlighted) {
-                colorScheme.primary
-            } else {
-                colorScheme.onSurfaceVariant
-            }
-        )
-    }
-}
-
 private fun handleLongClick(
     tab: FilesTab,
     currentItemPath: String,
@@ -671,13 +632,11 @@ private fun handleLongClick(
         if (tab.lastSelectedFileIndex >= 0) {
             if (tab.lastSelectedFileIndex > index) {
                 for (i in tab.lastSelectedFileIndex downTo index) {
-                    tab.selectedFiles[tab.activeFolderContent[i].uniquePath] =
-                        tab.activeFolderContent[i]
+                    tab.activeFolderContent.getOrNull(i)?.let { tab.selectedFiles[it.uniquePath] = it }
                 }
             } else {
                 for (i in tab.lastSelectedFileIndex..index) {
-                    tab.selectedFiles[tab.activeFolderContent[i].uniquePath] =
-                        tab.activeFolderContent[i]
+                    tab.activeFolderContent.getOrNull(i)?.let { tab.selectedFiles[it.uniquePath] = it }
                 }
             }
         }

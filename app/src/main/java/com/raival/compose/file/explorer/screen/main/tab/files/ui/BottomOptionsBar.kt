@@ -70,7 +70,7 @@ fun BottomOptionsBar(tab: FilesTab) {
                     .block(shape = RectangleShape)
                     .detectVerticalSwipe(
                         onSwipeUp = {
-                            tab.toggleFileOptionsMenu(tab.selectedFiles[tab.selectedFiles.keys.first()]!!)
+                            tab.selectedFiles.values.firstOrNull()?.let { tab.toggleFileOptionsMenu(it) }
                         }
                     )
             ) {
@@ -197,7 +197,7 @@ fun BottomOptionsBar(tab: FilesTab) {
             }
 
             BottomOptionsBarButton(Icons.Rounded.MoreVert, stringResource(R.string.options)) {
-                tab.toggleFileOptionsMenu(tab.selectedFiles[tab.selectedFiles.keys.first()]!!)
+                tab.selectedFiles.values.firstOrNull()?.let { tab.toggleFileOptionsMenu(it) }
             }
         } else {
             BottomOptionsBarButton(Icons.AutoMirrored.Rounded.Sort, stringResource(R.string.sort)) {

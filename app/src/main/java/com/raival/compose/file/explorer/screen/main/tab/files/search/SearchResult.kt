@@ -6,8 +6,7 @@ data class SearchResult(
     val file: ContentHolder,
     val matchType: MatchType,
     val lineNumber: Int? = null,
-    val matchedLine: String? = null,
-    val matchCount: Int = 1
+    val matchedLine: String? = null
 ) {
     enum class MatchType {
         FILENAME, EXTENSION, CONTENT

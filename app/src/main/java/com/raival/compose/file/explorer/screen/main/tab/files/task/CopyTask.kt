@@ -157,11 +157,12 @@ class CopyTask(
             val destFile = destHolder.zipTree.source.file.canonicalPath
 
             if (sourceFile == destFile) {
-                runBlocking {
-                    if (firstSource.getParent()?.uniquePath == destHolder.uniquePath) {
-                        markAsFailed(globalClass.resources.getString(R.string.task_summary_invalid_dest))
-                        return@runBlocking false
-                    }
+                val sameParent = runBlocking {
+                    firstSource.getParent()?.uniquePath == destHolder.uniquePath
+                }
+                if (sameParent) {
+                    markAsFailed(globalClass.resources.getString(R.string.task_summary_invalid_dest))
+                    return false
                 }
             }
         }
@@ -238,7 +239,8 @@ class CopyTask(
                             || (source is LocalFileHolder && destHolder is LocalFileHolder))
                 ) {
                     val destPath = destHolder.uniquePath
-                    if (!hasInvalidNesting && destPath.startsWith(source.uniquePath)) {
+                    // Compare whole path segments ("/Doc" must not match "/Documents")
+                    if (destPath == source.uniquePath || destPath.startsWith(source.uniquePath + "/")) {
                         hasInvalidNesting = true
                     } else {
                         pendingFiles.addAll(listFilesWithRelativePath(sourcePath, source))

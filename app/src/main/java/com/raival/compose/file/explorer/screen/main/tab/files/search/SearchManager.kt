@@ -38,6 +38,7 @@ class SearchManager {
 
     private var searchJob: Job? = null
     private var uiUpdateJob: Job? = null
+    private var searchGeneration = 0
     private val editableExtensions = FileMimeType.editableFileType.toSet()
     private val codeExtensions = FileMimeType.codeFileType.toSet()
 
@@ -52,10 +53,12 @@ class SearchManager {
 
     fun startSearch(tab: FilesTab) {
         if (searchQuery.isEmpty()) {
+            searchJob?.cancel()
             clearResults()
             return
         }
 
+        val generation = ++searchGeneration
         searchJob?.cancel()
         uiUpdateJob?.cancel()
         clearResults()
@@ -105,11 +108,14 @@ class SearchManager {
                 logger.logError(e)
                 globalClass.showMsg(globalClass.getString(R.string.something_went_wrong))
             } finally {
-                isSearching = false
-                uiUpdateJob?.cancel()
-                updateUiState() // Final cleanup
-                flushPendingResults() // Final flush
-                internalCurrentFile = emptyString
+                // Only the latest search may clean up; an older, cancelled one must not stop the new one
+                if (generation == searchGeneration) {
+                    isSearching = false
+                    uiUpdateJob?.cancel()
+                    updateUiState() // Final cleanup
+                    flushPendingResults() // Final flush
+                    internalCurrentFile = emptyString
+                }
             }
         }
     }

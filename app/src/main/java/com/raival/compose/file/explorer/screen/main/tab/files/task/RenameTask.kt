@@ -12,6 +12,8 @@ import com.raival.compose.file.explorer.screen.main.tab.files.misc.FileMimeType.
 import com.reandroid.archive.ZipAlign
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -350,11 +352,14 @@ class RenameTask(val sourceContent: List<ContentHolder>) : Task() {
             }
 
             // Replace the original file with the new one
-            if (!sourceZipFile.delete()) {
-                throw Exception(globalClass.getString(R.string.failed_to_delete_original_zip_file))
-            }
-
-            if (!tempFile.renameTo(sourceZipFile)) {
+            // Replace in one step: never delete the original before the new file is in place
+            try {
+                Files.move(
+                    tempFile.toPath(),
+                    sourceZipFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            } catch (_: Exception) {
                 throw Exception(globalClass.getString(R.string.failed_to_replace_original_zip_file))
             }
 

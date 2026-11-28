@@ -13,16 +13,6 @@ val sortFoldersFirst = Comparator { file1: ContentHolder, file2: ContentHolder -
     }
 }
 
-val sortFilesFirst = Comparator { file2: ContentHolder, file1: ContentHolder ->
-    if (file1.isFolder && !file2.isFolder) {
-        return@Comparator -1
-    } else if (!file1.isFolder && file2.isFolder) {
-        return@Comparator 1
-    } else {
-        return@Comparator 0
-    }
-}
-
 val sortOlderFirst = Comparator.comparingLong { obj: ContentHolder -> obj.lastModified }
 
 val sortNewerFirst = Comparator { file1: ContentHolder, file2: ContentHolder ->

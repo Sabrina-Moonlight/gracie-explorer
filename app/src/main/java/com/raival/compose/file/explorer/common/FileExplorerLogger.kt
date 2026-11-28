@@ -82,8 +82,8 @@ class FileExplorerLogger(
                 emptyList()
             }
 
-            // Add new error at the beginning and keep only the most recent 5
-            val updatedErrors = (listOf(newError) + currentErrors).reversed().takeLast(MAX_ERRORS)
+            // Add new error at the beginning and keep only the most recent
+            val updatedErrors = (listOf(newError) + currentErrors).take(MAX_ERRORS)
 
             preferences[ERRORS_KEY] = gson.toJson(updatedErrors)
         }
@@ -109,15 +109,6 @@ class FileExplorerLogger(
     suspend fun clearErrors() {
         context.logsDataStore.edit { preferences ->
             preferences.remove(ERRORS_KEY)
-        }
-    }
-
-    /**
-     * Get the most recent error
-     */
-    fun getLatestError(): Flow<LogHolder?> {
-        return getErrors().map { errors ->
-            errors.firstOrNull()
         }
     }
 
@@ -162,7 +153,7 @@ class FileExplorerLogger(
 
             // Add new warning at the beginning and keep only the most recent 10
             val updatedWarnings =
-                (listOf(newWarning) + currentWarnings).reversed().takeLast(MAX_WARNINGS)
+                (listOf(newWarning) + currentWarnings).take(MAX_WARNINGS)
 
             preferences[WARNINGS_KEY] = gson.toJson(updatedWarnings)
         }
@@ -188,15 +179,6 @@ class FileExplorerLogger(
     suspend fun clearWarnings() {
         context.logsDataStore.edit { preferences ->
             preferences.remove(WARNINGS_KEY)
-        }
-    }
-
-    /**
-     * Get the most recent warning
-     */
-    fun getLatestWarning(): Flow<LogHolder?> {
-        return getWarnings().map { warnings ->
-            warnings.firstOrNull()
         }
     }
 
@@ -227,7 +209,7 @@ class FileExplorerLogger(
             }
 
             // Add new info at the beginning and keep only the most recent 30
-            val updatedInfos = (listOf(newInfo) + currentInfos).reversed().takeLast(MAX_INFOS)
+            val updatedInfos = (listOf(newInfo) + currentInfos).take(MAX_INFOS)
 
             preferences[INFOS_KEY] = gson.toJson(updatedInfos)
         }
@@ -256,15 +238,6 @@ class FileExplorerLogger(
         }
     }
 
-    /**
-     * Get the most recent info
-     */
-    fun getLatestInfo(): Flow<LogHolder?> {
-        return getInfos().map { infos ->
-            infos.firstOrNull()
-        }
-    }
-
     // UTILITY FUNCTIONS
     /**
      * Clear all logs (errors, warnings, and infos)
@@ -274,36 +247,6 @@ class FileExplorerLogger(
             preferences.remove(ERRORS_KEY)
             preferences.remove(WARNINGS_KEY)
             preferences.remove(INFOS_KEY)
-        }
-    }
-
-    /**
-     * Get total count of all logs
-     */
-    fun getTotalLogCount(): Flow<Int> {
-        return context.logsDataStore.data.map { preferences ->
-            val errorCount = try {
-                val errorsJson = preferences[ERRORS_KEY] ?: "[]"
-                gson.fromJson<List<LogHolder>>(errorsJson, logListType)?.size ?: 0
-            } catch (_: Exception) {
-                0
-            }
-
-            val warningCount = try {
-                val warningsJson = preferences[WARNINGS_KEY] ?: "[]"
-                gson.fromJson<List<LogHolder>>(warningsJson, logListType)?.size ?: 0
-            } catch (_: Exception) {
-                0
-            }
-
-            val infoCount = try {
-                val infosJson = preferences[INFOS_KEY] ?: "[]"
-                gson.fromJson<List<LogHolder>>(infosJson, logListType)?.size ?: 0
-            } catch (_: Exception) {
-                0
-            }
-
-            errorCount + warningCount + infoCount
         }
     }
 }

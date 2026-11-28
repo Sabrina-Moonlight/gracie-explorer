@@ -1,19 +1,9 @@
 package com.raival.compose.file.explorer.screen.main
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.raival.compose.file.explorer.App.Companion.globalClass
-import com.raival.compose.file.explorer.App.Companion.logger
-import com.raival.compose.file.explorer.R
-import com.raival.compose.file.explorer.common.emptyString
-import com.raival.compose.file.explorer.common.fromJson
 import com.raival.compose.file.explorer.common.isNot
-import com.raival.compose.file.explorer.common.padEnd
-import com.raival.compose.file.explorer.common.printFullStackTrace
-import com.raival.compose.file.explorer.common.showMsg
 import com.raival.compose.file.explorer.common.toJson
-import com.raival.compose.file.explorer.screen.main.model.GithubRelease
 import com.raival.compose.file.explorer.screen.main.startup.StartupTab
 import com.raival.compose.file.explorer.screen.main.startup.StartupTabType
 import com.raival.compose.file.explorer.screen.main.startup.StartupTabs
@@ -29,12 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.InputStreamReader
-import java.net.ConnectException
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.UnknownHostException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -43,7 +27,6 @@ class MainActivityManager {
     private val _state = MutableStateFlow(MainActivityState())
     val state = _state.asStateFlow()
 
-    var newUpdate: GithubRelease? = null
 
     /**\
      * Loads available storage devices (Internal Storage, SD cards, etc)
@@ -416,106 +399,10 @@ class MainActivityManager {
         }
     }
 
-    fun checkForUpdate() {
-        fetchGithubReleases { releases ->
-            val latestRelease = releases.firstOrNull() ?: return@fetchGithubReleases
-            val latestVersionName = latestRelease.tagName
-
-            try {
-                val currentVersionName = globalClass.packageManager.getPackageInfo(
-                    globalClass.packageName,
-                    0
-                ).versionName ?: emptyString
-
-                val latestVersion = parseVersion(latestVersionName)
-                val currentVersion = parseVersion(currentVersionName)
-
-                if (isNewerVersion(latestVersion, currentVersion)) {
-                    newUpdate = latestRelease
-                    _state.update { it.copy(hasNewUpdate = true) }
-                    showMsg(R.string.new_update_available)
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    private fun isNewerVersion(latestVersion: List<Int>, currentVersion: List<Int>): Boolean {
-        // Determine the length of the longest version array to pad the shorter one.
-        val componentCount = max(latestVersion.size, currentVersion.size)
-
-        // Pad both lists to the same size with zeros. This handles cases like "2.0" vs "2.0.1".
-        val latestPadded = latestVersion.padEnd(componentCount, 0)
-        val currentPadded = currentVersion.padEnd(componentCount, 0)
-
-        for (i in 0 until componentCount) {
-            if (latestPadded[i] > currentPadded[i]) {
-                return true // latest is newer (e.g., 1.10.0 vs 1.9.0)
-            }
-            if (latestPadded[i] < currentPadded[i]) {
-                return false // current is newer or same, so latest is not an update
-            }
-        }
-        return false // Versions are identical
-    }
-
-    private fun parseVersion(versionName: String): List<Int> {
-        return versionName.removePrefix("v")
-            .split(".")
-            .map { it.toIntOrNull() ?: 0 } // Use toIntOrNull for safety
-    }
-
-    fun fetchGithubReleases(
-        onResult: (List<GithubRelease>) -> Unit
-    ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val url = "https://api.github.com/repos/Raival-e/Prism-File-Explorer/releases"
-            var releases = emptyList<GithubRelease>()
-
-            try {
-                val connection = URL(url).openConnection() as HttpURLConnection
-                connection.apply {
-                    requestMethod = "GET"
-                    connectTimeout = 10000
-                    readTimeout = 5000
-                    setRequestProperty("Accept", "application/vnd.github.v3+json")
-                    setRequestProperty("User-Agent", "Prism-File-Explorer")
-                }
-
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    connection.inputStream.use { inputStream ->
-                        releases = Gson().fromJson(
-                            InputStreamReader(
-                                inputStream
-                            ),
-                            object : TypeToken<List<GithubRelease>>() {}.type
-                        )
-                    }
-                }
-            } catch (_: UnknownHostException) {
-                logger.logInfo(globalClass.getString(R.string.check_for_updates_failed_no_internet_connection))
-            } catch (_: ConnectException) {
-                logger.logInfo(globalClass.getString(R.string.check_for_updates_failed_failed_to_connect_to_server))
-            } catch (e: Exception) {
-                logger.logError(e.printFullStackTrace())
-            }
-
-            onResult(releases)
-        }
-    }
-
     fun toggleJumpToPathDialog(show: Boolean) {
         _state.update {
             it.copy(
                 showJumpToPathDialog = show
-            )
-        }
-    }
-
-    fun toggleAppInfoDialog(show: Boolean) {
-        _state.update {
-            it.copy(
-                showAppInfoDialog = show
             )
         }
     }
@@ -537,12 +424,14 @@ class MainActivityManager {
     }
 
     fun reorderTabs(from: Int, to: Int) {
+        val activeTab = getActiveTab()
+        val reordered = _state.value.tabs.toMutableList().apply {
+            add(to, removeAt(from))
+        }
         _state.update {
             it.copy(
-                tabs = _state.value.tabs.toMutableList().apply {
-                    add(to, removeAt(from))
-                },
-                selectedTabIndex = _state.value.tabs.indexOf(getActiveTab())
+                tabs = reordered,
+                selectedTabIndex = reordered.indexOf(activeTab).coerceAtLeast(0)
             )
         }
     }

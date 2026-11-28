@@ -89,7 +89,7 @@ class ContentOperationService : Service() {
                 }
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun removeTask(taskId: String) {

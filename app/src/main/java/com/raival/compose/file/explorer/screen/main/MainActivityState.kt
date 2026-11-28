@@ -10,7 +10,6 @@ import com.raival.compose.file.explorer.screen.main.tab.files.holder.StorageDevi
 data class MainActivityState(
     val title: String = globalClass.getString(R.string.main_activity_title),
     val subtitle: String = emptyString,
-    val showAppInfoDialog: Boolean = false,
     val showJumpToPathDialog: Boolean = false,
     val showSaveEditorFilesDialog: Boolean = false,
     val showStartupTabsDialog: Boolean = false,
@@ -18,6 +17,5 @@ data class MainActivityState(
     val selectedTabIndex: Int = 0,
     val storageDevices: List<StorageDevice> = emptyList(),
     val tabs: List<Tab> = emptyList(),
-    val tabLayoutState: LazyListState = LazyListState(),
-    val hasNewUpdate: Boolean = false
+    val tabLayoutState: LazyListState = LazyListState()
 )

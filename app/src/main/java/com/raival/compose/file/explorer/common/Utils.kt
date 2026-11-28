@@ -1,11 +1,9 @@
 package com.raival.compose.file.explorer.common
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -15,7 +13,6 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns.DISPLAY_NAME
 import android.provider.OpenableColumns
-import android.util.Size
 import android.webkit.MimeTypeMap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -270,22 +267,6 @@ fun <A, B> HashMap<A, B>.removeIf(condition: (A, B) -> Boolean) {
     }
 }
 
-/**
- * Extends the List<T> class to include a padEnd function.
- * If the list's size is less than the specified [size], it adds the [value]
- * to the end until the list reaches the desired size.
- *
- * @param size The desired minimum size of the list.
- * @param value The value to use for padding.
- * @return The padded list.
- */
-fun <T> List<T>.padEnd(size: Int, value: T): List<T> {
-    if (this.size >= size) {
-        return this
-    }
-    val padding = List(size - this.size) { value }
-    return this + padding
-}
 
 // =============================================================================
 // JSON EXTENSIONS
@@ -311,14 +292,6 @@ fun <T> T.toJson(prettyPrint: Boolean = true): String {
 // ANDROID CONTEXT EXTENSIONS
 // =============================================================================
 
-fun Context.findActivity(): Activity? {
-    var context = this
-    while (context is ContextWrapper) {
-        if (context is Activity) return context
-        context = context.baseContext
-    }
-    return null
-}
 
 fun Context.isDarkTheme() = (resources.configuration.uiMode
         and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -675,8 +648,6 @@ fun Long.toFormattedTime(): String {
 // =============================================================================
 // GRAPHICS & BITMAP EXTENSIONS
 // =============================================================================
-
-fun Size.isZero() = width == 0 || height == 0
 
 fun Bitmap.scale(scaleFactor: Float, filter: Boolean = false): Bitmap {
     val newWidth = (width * scaleFactor).toInt()
